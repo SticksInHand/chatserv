@@ -1,6 +1,5 @@
 <!doctype html>
 <html>
-
 <head>
     <meta charset="utf-8">
     <title>admin客服</title>
@@ -29,7 +28,9 @@
     <ul class="list">
         <% for(var i = 0;i< list.length;i++){ %>
         <% var item = list[i] %>
-        <li data-convid="<%=list[i] %>"><a href="#" ><%=list[i] %></a></li>
+        <li class="chat-list-li" data-convid="<%=list[i] %>" data-count="0">
+            <a href="#" ><%=list[i] %></a><span class="hongdian color-red">1</span>
+        </li>
         <% } %>
     </ul>
 </script>
@@ -43,8 +44,7 @@
             <div id="print-wall-<%=list[i] %>" class="print-wall"></div>
         </div>
         <div class="item conv-dom" >
-            <label>输入信息：</label>
-            <input id="input-send-<%=list[i] %>" class="input-send" type="text">
+            <textarea id="input-send-<%=list[i] %>" class="input-send" type="text"></textarea>
             <div id="send-btn-<%=list[i] %>" class="btn send-btn">发送</div>
         </div>
     </div>

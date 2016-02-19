@@ -3,7 +3,6 @@
   padding: 0px;
 }
 body {
-  padding-top: 20px;
   text-align: center;
   font-size: 13px;
 }
@@ -15,6 +14,13 @@ input {
   width: 100px;
   border: 1px solid #ccc;
   margin: 5px;
+}
+.input-send{
+    padding: 2px 3px;
+    width: 792px;
+    display: inline-block;
+    border: 1px solid #e6e6e6;
+    height: 50px;
 }
 a {
   color: #00f;
@@ -44,9 +50,9 @@ a {
 .item p {
   margin: 5px;
 }
-.input-send {
-  width: 350px;
-}
+/*.input-send {*/
+  /*width: 350px;*/
+/*}*/
 .change-cid {
   margin: 20px auto;
   border: 1px solid #ae0000;
@@ -59,12 +65,12 @@ a {
 }
 .print-wall {
   overflow: auto;
-  margin: 20px auto;
+  /*margin: 20px auto;*/
   padding: 20px;
-  border: 1px solid #888;
+  border: 1px solid #e6e6e6;
   height: 300px;
-  max-width: 800px;
-  width: 84%;
+  /*max-width: 800px;*/
+  /*width: 84%;*/
   text-align: left;
 }
 .print-wall p {
@@ -73,3 +79,47 @@ a {
 }
 .list li a{height: 25px;
     line-height: 25px;}
+
+.chat-list-li{
+    width:298px;
+    height: 25px;
+    border: 1px solid #e6e6e6;
+    border-bottom: none;
+    padding: 3px 10px;
+}
+.chat-list-li.active{
+    background: #FFF2ED;
+}
+.chat-list-li:hover{
+    background: #FFF2ED;
+}
+.chat-list-li a{float: left;color: #888;text-decoration: none;}
+.chat-list-li:last-child{
+    border-bottom: 1px solid #e6e6e6;
+}
+#list-wrap{
+    width: 320px;
+    float: left;
+    margin-left: 5px;margin-right: 5px;
+}
+#window-main{
+    width: 800px;
+    float: left;
+}
+.hongdian{
+    display: none;
+    font-size: 12px;
+    font-family: 微软雅黑;
+    width: 32px;
+    height: 18px;
+    /*display: inline;*/
+    float: right;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    vertical-align: middle;
+    line-height: 20px;
+    margin-top: 3px;
+    background: rgb(239, 87, 84);
+    border-radius: 10px;
+}
+.send-btn{float: right;margin-top: 10px;}

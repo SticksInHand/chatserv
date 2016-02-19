@@ -1,6 +1,6 @@
 //初始化数据
 var appId = 'e3x6eiVFpVEg7Rhzn4fhouhM-gzGzoHsz';
-var clientId = '一亮';
+var clientId = 'liangliang';
 var firstFlag = true;
 var rt;  //链接对象
 var currentConv = '';  //当前房间号
@@ -9,6 +9,7 @@ var msgTime = '';
 var roomList = [];
 //当前房间对象
 var room;
+
 
 //初始化view
 var _ele = $('#list-wrap'),
@@ -59,13 +60,13 @@ function main(){
                 _winele.append($(_winhtml(_list)).hide());
 
                 //激活当前聊天窗口 并隐藏其他聊天窗口
-                showWindow(_list.list[0]);
+                activeChat(_list.list[0]);
 
 
                 //给列表元素绑定事件
                 _ele.find('li').on('click',function(){
                     var _convid = $(this).data('convid');
-                    showWindow(_convid);
+                    activeChat(_convid);
                     return false;
                 });
 
@@ -101,6 +102,33 @@ function main(){
 
 }
 
+
+// 列表中置顶convid为convid的item
+function toTop(convid){
+    var _this = '';
+    $("#list-wrap").find('li').each(function(){
+        if($(this).data('convid') == convid){
+            var __this = $(this).parent().prepend($(this).clone(true));
+            _this = __this.find('li').eq(0);
+            $(this).remove();
+        }
+    });
+    return _this;
+}
+
+// 收消息事件
+rt.on('message', function(data) {
+    var _this = toTop(data.cid);
+    if(data.cid != currentConv){
+        var _li = $(".chat-list-li[data-convid = "+data.cid+"]");
+        var _count = parseInt(_li.data('count')) + 1;
+        _li.data('count',_count);
+        _li.find('.hongdian').css({'display':'inline'}).text(_count);
+        _this.find('a').css({'color':'red'});
+    }
+});
+
+
 // 遍历与本用户相关的房间id 展示聊天纪录并激活接收消息
 function getText(convid){
     rt.conv(convid, function(obj) {
@@ -117,7 +145,6 @@ function getText(convid){
             // 将房间对象存储进room数组
             var _roomObj = {convid:convid,obj:obj};
             roomList.push(_roomObj);
-            console.log(roomList);
 
             // 接收消息
             conv.receive(function(data) {
@@ -127,9 +154,7 @@ function getText(convid){
                 }
                 showMsg(printWall,data);
             });
-            getLog(printWall,conv,function(){
-                console.log('拉取'+convid+'的聊天纪录完成');
-            });
+            getLog(printWall,conv,function(){});
 
         } else {
             console.log('服务器端不存在这个 conversation。');
@@ -146,10 +171,7 @@ function sendMsg(convid) {
         return;
     }
 
-    console.log(convid);
-
     var inputSend = $('#input-send-'+convid).get(0);
-    console.log(inputSend);
     var printWall = $('#print-wall-'+convid).get(0);
     var val = inputSend.value;
 
@@ -193,16 +215,19 @@ function sendMsg(convid) {
     // });
 }
 
-//显示当前窗口  隐藏其他窗口
-function showWindow(convid){
-    console.log('showme');
+// 激活convid为convid的房间为当前房间
+function activeChat(convid){
+    // 设置convid为当前conv
     currentConv = convid;
+    // 左侧列表当前列表加背景色区分
+    $(".chat-list-li[data-convid = "+convid+"]").addClass('active').siblings().removeClass('active');
+
     for(var i=0;i<roomList.length;i++){
         if(roomList[i].convid == convid){
             room = roomList[i].obj;   //激活当前房间对象
-            console.log(room);
         }
     }
+    // 显示对应聊天窗口，并隐藏其他的
     $(".conv-wrap").each(function(){
         if($(this).data('convid') == convid){
             $(this).show().siblings().hide();
