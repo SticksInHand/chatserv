@@ -12,23 +12,15 @@
 </head>
 <body>
 <div class="wrap">
-    <div class="item" id="list-wrap">
-
-    </div>
+    <!-- 列表容器 -->
+    <div class="item" id="list-wrap"></div>
     <!--<div class="item">-->
         <!--<label>您的昵称：</label>-->
         <!--<input autofocus id="input-name" type="text">-->
         <!--<div id="open-btn" class="btn">连接服务器</div>-->
     <!--</div>-->
-    <div class="item">
-        <div id="print-wall" class="print-wall"></div>
-    </div>
-    <div class="item conv-dom" data-convid="" >
-        <label>输入信息：</label>
-        <input id="input-send" class="input-send" type="text">
-        <div id="send-btn" class="btn">发送</div>
-    </div>
-
+    <!-- 聊天容器 -->
+    <div id="window-main"></div>
 </div>
 
 
@@ -43,6 +35,23 @@
 </script>
 <!-- 列表模版end -->
 
+<!-- 聊天窗口模版begin -->
+<script type="text/template" id="window-tpl">
+    <% for(var i = 0;i< list.length;i++){ %>
+    <div class="conv-wrap" data-convid="<%=list[i] %>" data-logflag="false" >
+        <div class="item">
+            <div id="print-wall-<%=list[i] %>" class="print-wall"></div>
+        </div>
+        <div class="item conv-dom" >
+            <label>输入信息：</label>
+            <input id="input-send-<%=list[i] %>" class="input-send" type="text">
+            <div id="send-btn-<%=list[i] %>" class="btn send-btn">发送</div>
+        </div>
+    </div>
+    <% } %>
+</script>
+<!-- 聊天窗口模版end-->
+
 <!-- 引入插件，兼容低 IE8+ 等低版本浏览器，注意看下面的注释。如果不需要兼容，可以去掉这部分。 -->
 <!--[if lt IE 10]>
 <script type="text/javascript" src="../plugin/web-socket-js/swfobject.js"></script>
@@ -53,11 +62,12 @@
 </script>
 <![endif]-->
 <!-- 引入插件部分结束 -->
+<!-- 引入类库 -->
 <script src="../js/jquery-2.1.3.min.js" ></script>
 <script src="../js/underscore.js"></script>
 <!-- 引入 LeanCloud 实时通信 SDK -->
 <script src="../dist/AV.realtime.js"></script>
-<!-- Demo 逻辑文件 -->
+<!-- 逻辑文件 -->
 <script src="../js/ctrl.js"></script>
 <!--<script src="../js/test.js"></script>-->
 </body>
