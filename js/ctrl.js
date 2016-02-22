@@ -220,7 +220,10 @@ function activeChat(convid){
     // 设置convid为当前conv
     currentConv = convid;
     // 左侧列表当前列表加背景色区分
-    $(".chat-list-li[data-convid = "+convid+"]").addClass('active').siblings().removeClass('active');
+    var _thisList = $(".chat-list-li[data-convid = "+convid+"]");
+    _thisList.addClass('active').siblings().removeClass('active');
+    _thisList.data('count',0);
+    _thisList.find('.hongdian').css({'display':'none'});
 
     for(var i=0;i<roomList.length;i++){
         if(roomList[i].convid == convid){
