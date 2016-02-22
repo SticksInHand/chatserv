@@ -286,6 +286,7 @@ function showMsg(printWall,data, isBefore) {
     }
 }
 
+// 在窗口中显示消息
 function showLog(printWall,msg, data, isBefore) {
     if (data) {
         // console.log(msg, data);
@@ -300,10 +301,12 @@ function showLog(printWall,msg, data, isBefore) {
     }
 }
 
+// 在当前窗口显示系统通知
 function showCurrentLog(msg,data,isBefore){
     showLog($('#print-wall-'+currentConv).get(0),msg,data,isBefore)
 }
 
+// 转义防止xss
 function encodeHTML(source) {
     return String(source)
         .replace(/&/g, '&amp;')
@@ -314,6 +317,7 @@ function encodeHTML(source) {
     // .replace(/'/g,'&#39;');
 }
 
+// 格式化事件显示
 function formatTime(time) {
     var date = new Date(time);
     var month = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1;
