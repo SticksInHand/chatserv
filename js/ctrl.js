@@ -44,48 +44,13 @@ function main(){
             firstFlag = false;
             // 查询当前 当前用户的 的相关信息
             rt.query(function(data) {
-                var _list = {'list':[]};
                 for(var i=0;i<data.length;i++){  //遍历所有与本用户相关的conversation信息
                     var convId = data[i].objectId;
-                    getText(convId);
-                    _list.list.push(convId);
+                    addChat(convId);  //渲染模版
+                    getText(convId);  //聊天纪录
                 }
-
-                //渲染列表模版
-                var _html = _.template(_tpl);
-                _ele.html(_html(_list));
-
-                //渲染聊天窗口模版
-                var _winhtml = _.template(_wintpl);
-                _winele.append($(_winhtml(_list)).hide());
-
                 //激活当前聊天窗口 并隐藏其他聊天窗口
-                activeChat(_list.list[0]);
-
-
-                //给列表元素绑定事件
-                _ele.find('li').on('click',function(){
-                    var _convid = $(this).data('convid');
-                    activeChat(_convid);
-                    return false;
-                });
-
-                //绑定发送消息点击事件
-                _winele.find('.send-btn').on('click',function(e){
-                    e.preventDefault();
-                    var _convid = $(this).closest('.conv-wrap').data('convid');
-                    sendMsg(_convid);
-                });
-
-                //绑定发送消息回车事件
-                _winele.find('.input-send').on('keydown',function(e){
-                    if(e.keyCode == 13){
-                        var _convid = $(this).closest('.conv-wrap').data('convid');
-                        sendMsg(_convid);
-                    }
-                });
-
-
+                activeChat(data[0].objectId);
             });
         }
     });
@@ -102,6 +67,45 @@ function main(){
 
 }
 
+// 添加一个会话对象
+function addChat(convid){
+    // 用来渲染模版的数据
+    var _convidObj = {'convid':convid};
+
+    //渲染列表条目模版
+    var _html = _.template(_tpl);
+    var _eleDom = _html(_convidObj);
+    _ele.append($(_eleDom));
+
+    //渲染聊天窗口模版
+    var _winhtml = _.template(_wintpl);
+    var _wineleDom = _winhtml(_convidObj);
+    _winele.append($(_wineleDom).hide());
+
+
+    //给列表元素绑定事件
+    _ele.find('li').off('click').on('click',function(){
+        var _convid = $(this).data('convid');
+        activeChat(_convid);
+        return false;
+    });
+
+    //绑定发送消息点击事件
+    _winele.find('.send-btn').off('click').on('click',function(e){
+        e.preventDefault();
+        var _convid = $(this).closest('.conv-wrap').data('convid');
+        sendMsg(_convid);
+    });
+
+    //绑定发送消息回车事件
+    _winele.find('.input-send').off('keydown').on('keydown',function(e){
+        if(e.keyCode == 13){
+            var _convid = $(this).closest('.conv-wrap').data('convid');
+            sendMsg(_convid);
+        }
+    });
+
+}
 
 // 列表中置顶convid为convid的item
 function toTop(convid){
@@ -113,13 +117,23 @@ function toTop(convid){
             $(this).remove();
         }
     });
-    return _this;
+    return _this;  //返回置顶条目的对象
 }
 
 // 收消息事件
 rt.on('message', function(data) {
-    var _this = toTop(data.cid);
-    if(data.cid != currentConv){
+    var _this = toTop(data.cid);  // 置顶收到消息的会话
+    var handler = 0;
+    for(var i = 0;i<roomList.length;i++){
+        if(roomList[i].convid == data.cid){
+            handler++;
+        }
+    }
+
+    if(handler != 1 || data.cid != currentConv){
+        if(handler != 1){
+            addChat(data.cid);  //添加窗口
+        }
         var _li = $(".chat-list-li[data-convid = "+data.cid+"]");
         var _count = parseInt(_li.data('count')) + 1;
         _li.data('count',_count);
@@ -219,11 +233,12 @@ function sendMsg(convid) {
 function activeChat(convid){
     // 设置convid为当前conv
     currentConv = convid;
-    // 左侧列表当前列表加背景色区分
-    var _thisList = $(".chat-list-li[data-convid = "+convid+"]");
-    _thisList.addClass('active').siblings().removeClass('active');
-    _thisList.data('count',0);
-    _thisList.find('.hongdian').css({'display':'none'});
+
+    var _thisList = $(".chat-list-li[data-convid = "+convid+"]"); // 左侧列表条目
+    _thisList.addClass('active').siblings().removeClass('active'); // 左侧列表当前列表加背景色区分
+    _thisList.data('count',0); //清空未读消息条数
+    _thisList.find('.hongdian').css({'display':'none'});  //隐藏未读消息条数容器
+    _thisList.find('a').css({'color':'#888'});   //字体颜色变回灰色
 
     for(var i=0;i<roomList.length;i++){
         if(roomList[i].convid == convid){

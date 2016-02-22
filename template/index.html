@@ -12,43 +12,33 @@
 <body>
 <div class="wrap">
     <!-- 列表容器 -->
-    <div class="item" id="list-wrap"></div>
-    <!--<div class="item">-->
-        <!--<label>您的昵称：</label>-->
-        <!--<input autofocus id="input-name" type="text">-->
-        <!--<div id="open-btn" class="btn">连接服务器</div>-->
-    <!--</div>-->
-    <!-- 聊天容器 -->
+    <div class="item list-wrap" >
+        <ul class="list" id="list-wrap"></ul>
+    </div>
+    <!-- 聊天窗口容器 -->
     <div id="window-main"></div>
 </div>
 
 
 <!-- 列表模版begin -->
 <script type="text/template" id="list" >
-    <ul class="list">
-        <% for(var i = 0;i< list.length;i++){ %>
-        <% var item = list[i] %>
-        <li class="chat-list-li" data-convid="<%=list[i] %>" data-count="0">
-            <a href="#" ><%=list[i] %></a><span class="hongdian color-red">1</span>
-        </li>
-        <% } %>
-    </ul>
+    <li class="chat-list-li" data-convid="<%=convid %>" data-count="0">
+        <a href="#" ><%=convid %></a><span class="hongdian color-red">1</span>
+    </li>
 </script>
 <!-- 列表模版end -->
 
 <!-- 聊天窗口模版begin -->
 <script type="text/template" id="window-tpl">
-    <% for(var i = 0;i< list.length;i++){ %>
-    <div class="conv-wrap" data-convid="<%=list[i] %>" data-logflag="false" >
+    <div class="conv-wrap" data-convid="<%=convid %>" data-logflag="false" >
         <div class="item">
-            <div id="print-wall-<%=list[i] %>" class="print-wall"></div>
+            <div id="print-wall-<%=convid %>" class="print-wall"></div>
         </div>
         <div class="item conv-dom" >
-            <textarea id="input-send-<%=list[i] %>" class="input-send" type="text"></textarea>
-            <div id="send-btn-<%=list[i] %>" class="btn send-btn">发送</div>
+            <textarea id="input-send-<%=convid %>" class="input-send" type="text"></textarea>
+            <div id="send-btn-<%=convid %>" class="btn send-btn">发送</div>
         </div>
     </div>
-    <% } %>
 </script>
 <!-- 聊天窗口模版end-->
 
@@ -69,7 +59,6 @@
 <script src="../dist/AV.realtime.js"></script>
 <!-- 逻辑文件 -->
 <script src="../js/ctrl.js"></script>
-<!--<script src="../js/test.js"></script>-->
 </body>
 
 </html>
