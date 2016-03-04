@@ -229,7 +229,7 @@ function makeColor(_this,cid){
     _this.find('a').css({'color':'red'});
 }
 
-// 遍历与本用户相关的房间id 展示聊天纪录并激活接收消息
+// 显示房间id为convid的窗口的消息
 function getText(convid){
     rt.conv(convid, function(obj) {
         var printWall = $('#print-wall-'+convid).get(0);
