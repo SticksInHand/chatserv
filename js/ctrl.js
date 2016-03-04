@@ -1,6 +1,13 @@
+//获取url参数
+function getParam(name){
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+    var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+    if (r != null) return r[2]; return null; //返回参数值
+}
 //初始化数据
-var appId = 'e3x6eiVFpVEg7Rhzn4fhouhM-gzGzoHsz';
-var clientId = 'liangliang';
+//var appId = 'e3x6eiVFpVEg7Rhzn4fhouhM-gzGzoHsz';
+var appId = 'BCOGEHyl1Y13kRRK4HjknROO-gzGzoHsz';
+var clientId = decodeURI(getParam('clientid'))||'liangliang';
 var firstFlag = true;
 var rt;  //链接对象
 var currentConv = '';  //当前房间号
@@ -9,12 +16,15 @@ var msgTime = '';
 var roomList = [];
 //当前房间对象
 var room;
+//当前置顶房间id
+var toproom;
 
 
 //初始化view
 var _ele = $('#list-wrap'),
     _tpl = $('#list').html(),
     _wintpl = $('#window-tpl').html(),
+    _wintplempty = $("#window-tpl-empty").html(),
     _winele = $('#window-main');
 
 //初始化程序
@@ -44,8 +54,13 @@ function main(){
             firstFlag = false;
             // 查询当前 当前用户的 的相关信息
             rt.query(function(data) {
+                if(data.length == 0){
+                    addEmpty();
+                }
                 for(var i=0;i<data.length;i++){  //遍历所有与本用户相关的conversation信息
                     var convId = data[i].objectId;
+                    var name = data[i].c;
+                    //console.log(data);
                     addChat(convId);  //渲染模版
                     getText(convId);  //聊天纪录
                 }
@@ -66,11 +81,23 @@ function main(){
     });
 
 }
+// 没有会话展示空模版
+function addEmpty(){
+    var _winhtml = _.template(_wintplempty);
+    var _wineleDom = _winhtml({});
+    _winele.append($(_wineleDom).show());
+}
 
 // 添加一个会话对象
 function addChat(convid){
+    if($(".chat-list-li[data-convid = "+convid+"]").length != 0){   //已经添加过的会话不再添加
+        return;
+    }
     // 用来渲染模版的数据
     var _convidObj = {'convid':convid};
+
+    // 隐藏空模版
+    $("#window-tpl-empty").hide();
 
     //渲染列表条目模版
     var _html = _.template(_tpl);
@@ -109,6 +136,7 @@ function addChat(convid){
 
 // 列表中置顶convid为convid的item
 function toTop(convid){
+    toproom = convid;
     var _this = '';
     $("#list-wrap").find('li').each(function(){
         if($(this).data('convid') == convid){
@@ -119,10 +147,10 @@ function toTop(convid){
     });
     return _this;  //返回置顶条目的对象
 }
-
 // 收消息事件
 rt.on('message', function(data) {
-    var _this = toTop(data.cid);  // 置顶收到消息的会话
+    var _this;
+
     var handler = 0;
     for(var i = 0;i<roomList.length;i++){
         if(roomList[i].convid == data.cid){
@@ -130,18 +158,47 @@ rt.on('message', function(data) {
         }
     }
 
-    if(handler != 1 || data.cid != currentConv){
-        if(handler != 1){
-            addChat(data.cid);  //添加窗口
+    if(handler == 1){
+        if(data.cid != toproom){
+            _this = toTop(data.cid);// 置顶收到消息的会话
+        }else{
+            _this = $("#list-wrap").find('li[data-convid='+data.cid+']');
         }
-        var _li = $(".chat-list-li[data-convid = "+data.cid+"]");
-        var _count = parseInt(_li.data('count')) + 1;
-        _li.data('count',_count);
-        _li.find('.hongdian').css({'display':'inline'}).text(_count);
-        _this.find('a').css({'color':'red'});
+        if(data.cid != currentConv){
+            makeColor(_this,data.cid);
+        }
+    }else if(handler == 0){
+        addChat(data.cid);  //添加窗口
+        if(data.cid != toproom){
+            _this = toTop(data.cid);
+        }else{
+            _this = $("#list-wrap").find('li[data-convid='+data.cid+']');
+        }
+        makeColor(_this,data.cid);
+        var printWall = $('#print-wall-'+data.cid).get(0);
+        showMsg(printWall,data);
     }
+
+    //if(handler == 1 || data.cid != currentConv){
+    //    if(handler == 0){
+    //        addChat(data.cid);  //添加窗口
+    //    }
+    //    var _li = $(".chat-list-li[data-convid = "+data.cid+"]");
+    //    var _count = parseInt(_li.data('count')) + 1;
+    //    _li.data('count',_count);
+    //    _li.find('.hongdian').css({'display':'inline'}).text(_count);
+    //    _this.find('a').css({'color':'red'});
+    //}
 });
 
+//给新消息添加高亮以及消息条数
+function makeColor(_this,cid){
+    var _li = $(".chat-list-li[data-convid = "+cid+"]");
+    var _count = parseInt(_li.data('count')) + 1;
+    _li.data('count',_count);
+    _li.find('.hongdian').css({'display':'inline'}).text(_count);
+    _this.find('a').css({'color':'red'});
+}
 
 // 遍历与本用户相关的房间id 展示聊天纪录并激活接收消息
 function getText(convid){
@@ -207,8 +264,8 @@ function sendMsg(convid) {
         printWall.scrollTop = printWall.scrollHeight;
     });
 
-    // 发送多媒体消息，如果想测试图片发送，可以打开注释
-    // room.send({
+    ////发送多媒体消息，如果想测试图片发送，可以打开注释
+    //room.send({
     //     text: '图片测试',
     //     // 自定义的属性
     //     attr: {
@@ -222,11 +279,11 @@ function sendMsg(convid) {
     //         width: 123,
     //         size: 888
     //     }
-    // }, {
+    //}, {
     //    type: 'image'
-    // }, function(data) {
+    //}, function(data) {
     //     console.log('图片数据发送成功！');
-    // });
+    //});
 }
 
 // 激活convid为convid的房间为当前房间
@@ -286,10 +343,17 @@ function getLog(printWall,conv,callback) {
 
 // 显示接收到的信息
 function showMsg(printWall,data, isBefore) {
+
+    //console.log(data);
+
     var text = '';
+    var _url = '';
     var from = data.fromPeerId;
     if (data.msg.type) {
         text = data.msg.text;
+        if(data.msg.type == 'image'){
+            text = data.msg;
+        }
     } else {
         text = data.msg;
     }
@@ -305,7 +369,12 @@ function showMsg(printWall,data, isBefore) {
 function showLog(printWall,msg, data, isBefore) {
     if (data) {
         // console.log(msg, data);
-        msg = msg + '<span class="strong">' + encodeHTML(JSON.stringify(data)) + '</span>';
+        if(data.url){
+            msg = msg + '<span class="strong">' + '<img src="'+data.url+'" width="500" />' + '</span>';
+        }else{
+            msg = msg + '<span class="strong">' + encodeHTML(JSON.stringify(data)) + '</span>';
+        }
+
     }
     var p = document.createElement('p');
     p.innerHTML = msg;
