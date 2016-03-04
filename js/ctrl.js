@@ -1,9 +1,3 @@
-//获取url参数
-function getParam(name){
-    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
-    var r = window.location.search.substr(1).match(reg);  //匹配目标参数
-    if (r != null) return r[2]; return null; //返回参数值
-}
 //初始化数据
 //var appId = 'e3x6eiVFpVEg7Rhzn4fhouhM-gzGzoHsz';
 var appId = 'BCOGEHyl1Y13kRRK4HjknROO-gzGzoHsz';
@@ -27,8 +21,55 @@ var _ele = $('#list-wrap'),
     _wintplempty = $("#window-tpl-empty").html(),
     _winele = $('#window-main');
 
-//初始化程序
-main();
+$(function(){
+    // 点击上线
+    $("#login").on('click',function(){
+        var url = 'http://qa-t.shoppingm.cn/api/customerservice/login';
+        var data = {'csserial':true};
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: data,
+            dataType: 'json',
+            success: function(){
+                main();//初始化程序
+            },
+            error:function(){
+                alert('登陆失败，请重试')
+            }
+        });
+    });
+    // 点击离线
+    $("#logout").on('click',function(){
+        if(rt){
+            var url = 'http://qa-t.shoppingm.cn/api/customerservice/login';
+            var data = {'csserial':true};
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: data,
+                dataType: 'json',
+                success: function(){
+                    rt.close();
+                    $("#list-wrap").find('li').remove();
+                    $(".conv-wrap").remove();
+                    alert('已经下线');
+                    window.location.reload();
+                },
+                error:function(){
+                    alert('下线失败，请重试');
+                }
+            });
+        }else{
+            alert('你还没上线呢');
+        }
+    });
+
+    // 关闭窗口时关闭链接
+    $(window).unload(function(){
+        rt.close();
+    });
+});
 
 // 创建聊天实例（支持单页多实例）
 function createRt(){
@@ -60,8 +101,7 @@ function main(){
                 for(var i=0;i<data.length;i++){  //遍历所有与本用户相关的conversation信息
                     var convId = data[i].objectId;
                     var name = data[i].c;
-                    //console.log(data);
-                    addChat(convId);  //渲染模版
+                    addChat(convId,name);  //渲染模版
                     getText(convId);  //聊天纪录
                 }
                 //激活当前聊天窗口 并隐藏其他聊天窗口
@@ -80,6 +120,38 @@ function main(){
         showCurrentLog('连接遇到错误。。。');
     });
 
+    // 收消息事件
+    rt.on('message', function(data) {
+        var _this;
+        var handler = 0;
+        for(var i = 0;i<roomList.length;i++){
+            if(roomList[i].convid == data.cid){
+                handler++;
+            }
+        }
+
+        if(handler == 1){
+            if(data.cid != toproom){
+                _this = toTop(data.cid);// 置顶收到消息的会话
+            }else{
+                _this = $("#list-wrap").find('li[data-convid='+data.cid+']');
+            }
+            if(data.cid != currentConv){
+                makeColor(_this,data.cid);
+            }
+        }else if(handler == 0){
+            addChat(data.cid,data.fromPeerId);  //添加窗口
+            if(data.cid != toproom){
+                _this = toTop(data.cid);
+            }else{
+                _this = $("#list-wrap").find('li[data-convid='+data.cid+']');
+            }
+            makeColor(_this,data.cid);
+            var printWall = $('#print-wall-'+data.cid).get(0);
+            showMsg(printWall,data);
+        }
+    });
+
 }
 // 没有会话展示空模版
 function addEmpty(){
@@ -89,12 +161,12 @@ function addEmpty(){
 }
 
 // 添加一个会话对象
-function addChat(convid){
+function addChat(convid,name){
     if($(".chat-list-li[data-convid = "+convid+"]").length != 0){   //已经添加过的会话不再添加
         return;
     }
     // 用来渲染模版的数据
-    var _convidObj = {'convid':convid};
+    var _convidObj = {'convid':convid,'convname':name};
 
     // 隐藏空模版
     $("#window-tpl-empty").hide();
@@ -147,49 +219,6 @@ function toTop(convid){
     });
     return _this;  //返回置顶条目的对象
 }
-// 收消息事件
-rt.on('message', function(data) {
-    var _this;
-
-    var handler = 0;
-    for(var i = 0;i<roomList.length;i++){
-        if(roomList[i].convid == data.cid){
-            handler++;
-        }
-    }
-
-    if(handler == 1){
-        if(data.cid != toproom){
-            _this = toTop(data.cid);// 置顶收到消息的会话
-        }else{
-            _this = $("#list-wrap").find('li[data-convid='+data.cid+']');
-        }
-        if(data.cid != currentConv){
-            makeColor(_this,data.cid);
-        }
-    }else if(handler == 0){
-        addChat(data.cid);  //添加窗口
-        if(data.cid != toproom){
-            _this = toTop(data.cid);
-        }else{
-            _this = $("#list-wrap").find('li[data-convid='+data.cid+']');
-        }
-        makeColor(_this,data.cid);
-        var printWall = $('#print-wall-'+data.cid).get(0);
-        showMsg(printWall,data);
-    }
-
-    //if(handler == 1 || data.cid != currentConv){
-    //    if(handler == 0){
-    //        addChat(data.cid);  //添加窗口
-    //    }
-    //    var _li = $(".chat-list-li[data-convid = "+data.cid+"]");
-    //    var _count = parseInt(_li.data('count')) + 1;
-    //    _li.data('count',_count);
-    //    _li.find('.hongdian').css({'display':'inline'}).text(_count);
-    //    _this.find('a').css({'color':'red'});
-    //}
-});
 
 //给新消息添加高亮以及消息条数
 function makeColor(_this,cid){
@@ -263,27 +292,35 @@ function sendMsg(convid) {
         showLog(printWall,'（' + formatTime(data.t) + '）  自己： ', val);
         printWall.scrollTop = printWall.scrollHeight;
     });
+}
 
-    ////发送多媒体消息，如果想测试图片发送，可以打开注释
-    //room.send({
-    //     text: '图片测试',
-    //     // 自定义的属性
-    //     attr: {
-    //         a:123
-    //     },
-    //     url: 'https://leancloud.cn/images/static/press/Logo%20-%20Blue%20Padding.png',
-    //     metaData: {
-    //         name:'logo',
-    //         format:'png',
-    //         height: 123,
-    //         width: 123,
-    //         size: 888
-    //     }
-    //}, {
-    //    type: 'image'
-    //}, function(data) {
-    //     console.log('图片数据发送成功！');
-    //});
+//发送图片
+function sendImg(convid){
+    var inputSend = $('#input-send-'+convid).get(0);
+    var printWall = $('#print-wall-'+convid).get(0);
+    var val = inputSend.value;
+
+    //发送多媒体消息，如果想测试图片发送，可以打开注释
+    room.send({
+         text: '图片测试',
+         // 自定义的属性
+         attr: {
+             a:123
+         },
+         url: 'https://leancloud.cn/images/static/press/Logo%20-%20Blue%20Padding.png',
+         metaData: {
+             name:'logo',
+             format:'png',
+             height: 123,
+             width: 123,
+             size: 888
+         }
+    }, {
+        type: 'image'
+    }, function(data) {
+        showLog(printWall,'（' + formatTime(data.t) + '）  自己： ', {"url":"https://leancloud.cn/images/static/press/Logo%20-%20Blue%20Padding.png"});
+        printWall.scrollTop = printWall.scrollHeight;
+    });
 }
 
 // 激活convid为convid的房间为当前房间
@@ -410,4 +447,10 @@ function formatTime(time) {
     var mm = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
     var ss = date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds();
     return date.getFullYear() + '-' + month + '-' + currentDate + ' ' + hh + ':' + mm + ':' + ss;
+}
+//获取url参数
+function getParam(name){
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+    var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+    if (r != null) return r[2]; return null; //返回参数值
 }
