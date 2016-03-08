@@ -1,6 +1,7 @@
 //初始化数据
 //var appId = 'e3x6eiVFpVEg7Rhzn4fhouhM-gzGzoHsz';
-var appId = 'BCOGEHyl1Y13kRRK4HjknROO-gzGzoHsz';
+//var appId = 'BCOGEHyl1Y13kRRK4HjknROO-gzGzoHsz';
+var appId = 'GB66aParOPSss4etPCGy09D1-gzGzoHsz';
 var clientId = decodeURI(getParam('clientid'))||'liangliang';
 var firstFlag = true;
 var rt;  //链接对象
@@ -13,6 +14,7 @@ var room;
 //当前置顶房间id
 var toproom;
 
+AV.initialize('GB66aParOPSss4etPCGy09D1-gzGzoHsz', 'EQswgTlCwr2ASMG94mU9cEvU');
 
 //初始化view
 var _ele = $('#list-wrap'),
@@ -124,6 +126,7 @@ function main(){
     rt.on('message', function(data) {
         var _this;
         var handler = 0;
+        getText(data.cid);
         for(var i = 0;i<roomList.length;i++){
             if(roomList[i].convid == data.cid){
                 handler++;
@@ -185,7 +188,9 @@ function addChat(convid,name){
     //给列表元素绑定事件
     _ele.find('li').off('click').on('click',function(){
         var _convid = $(this).data('convid');
+        console.log(_convid);
         activeChat(_convid);
+        console.log(room);
         return false;
     });
 
@@ -194,6 +199,13 @@ function addChat(convid,name){
         e.preventDefault();
         var _convid = $(this).closest('.conv-wrap').data('convid');
         sendMsg(_convid);
+    });
+
+    //绑定发送图片事件
+    _winele.find('.send-pic').off('change').on('change',function(e){
+        e.preventDefault();
+        var _convid = $(this).closest('.conv-wrap').data('convid');
+        sendImg(_convid);
     });
 
     //绑定发送消息回车事件
@@ -296,31 +308,51 @@ function sendMsg(convid) {
 
 //发送图片
 function sendImg(convid){
-    var inputSend = $('#input-send-'+convid).get(0);
     var printWall = $('#print-wall-'+convid).get(0);
-    var val = inputSend.value;
+    var picbox = $('#photoFileUpload-'+convid).get(0);
+    var text;
+    if (picbox.files.length > 0) {
+        var file = picbox.files[0];
+        var name = 'avatar.jpg';
+        console.log(file);
 
-    //发送多媒体消息，如果想测试图片发送，可以打开注释
-    room.send({
-         text: '图片测试',
-         // 自定义的属性
-         attr: {
-             a:123
-         },
-         url: 'https://leancloud.cn/images/static/press/Logo%20-%20Blue%20Padding.png',
-         metaData: {
-             name:'logo',
-             format:'png',
-             height: 123,
-             width: 123,
-             size: 888
-         }
-    }, {
-        type: 'image'
-    }, function(data) {
-        showLog(printWall,'（' + formatTime(data.t) + '）  自己： ', {"url":"https://leancloud.cn/images/static/press/Logo%20-%20Blue%20Padding.png"});
-        printWall.scrollTop = printWall.scrollHeight;
-    });
+        var avFile = new AV.File(name, file);
+        avFile.save().then(function(obj) {
+            // 数据保存成功
+            console.log(obj);
+            text = {'url':obj.url()};
+            sendPic(text);
+        }, function(err) {
+            // 数据保存失败
+            console.log(err);
+            text = '图片发送失败，请刷新重试('+err+')';
+            sendPic(text);
+        });
+    }
+
+    function sendPic(text){
+        //发送多媒体消息，如果想测试图片发送，可以打开注释
+        room.send({
+            text: 'text',
+            // 自定义的属性
+            attr: {
+                a:123
+            },
+            url: text.url,
+            metaData: {
+                name:'logo',
+                format:'png',
+                height: 123,
+                width: 123,
+                size: 888
+            }
+        }, {
+            type: 'image'
+        }, function(data) {
+            showLog(printWall,'（' + formatTime(data.t) + '）  自己： ', text);
+            printWall.scrollTop = printWall.scrollHeight;
+        });
+    }
 }
 
 // 激活convid为convid的房间为当前房间
