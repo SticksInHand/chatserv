@@ -1,8 +1,12 @@
 //初始化数据
+var clientidname = 'sduEn9';
+var host = 'http://qa-t.shoppingm.cn';
 //var appId = 'e3x6eiVFpVEg7Rhzn4fhouhM-gzGzoHsz';
 //var appId = 'BCOGEHyl1Y13kRRK4HjknROO-gzGzoHsz';
-var appId = 'GB66aParOPSss4etPCGy09D1-gzGzoHsz';
-var clientId = decodeURI(getParam('clientid'))||'liangliang';
+var appId = 'eWBTl83vk7egBcxweRUsCyp8-gzGzoHsz';  //正式环境
+var appId = 'Gx1p05nkH8gLAn2FiwXdVofR-gzGzoHsz';  //QA环境
+//var clientId = decodeURI(getParam('clientid'))||'liangliang';
+var clientId = clientidname;
 var firstFlag = true;
 var rt;  //链接对象
 var currentConv = '';  //当前房间号
@@ -13,9 +17,8 @@ var roomList = [];
 var room;
 //当前置顶房间id
 var toproom;
-
-AV.initialize('GB66aParOPSss4etPCGy09D1-gzGzoHsz', 'EQswgTlCwr2ASMG94mU9cEvU');
-
+//AV.initialize('eWBTl83vk7egBcxweRUsCyp8-gzGzoHsz', 'vJYl6jtApxfECew7hi8PPxOo');  //正式环境
+AV.initialize('Gx1p05nkH8gLAn2FiwXdVofR-gzGzoHsz', 'R69Wccem2PIYNXjmqTWmcoCj');    //QA环境
 //初始化view
 var _ele = $('#list-wrap'),
     _tpl = $('#list').html(),
@@ -26,8 +29,8 @@ var _ele = $('#list-wrap'),
 $(function(){
     // 点击上线
     $("#login").on('click',function(){
-        var url = 'http://qa-t.shoppingm.cn/api/customerservice/login';
-        var data = {'csserial':true};
+        var url = host+'/api/customerservice/login';
+        var data = {'csserial':clientId};
         $.ajax({
             type: 'POST',
             url: url,
@@ -44,8 +47,8 @@ $(function(){
     // 点击离线
     $("#logout").on('click',function(){
         if(rt){
-            var url = 'http://qa-t.shoppingm.cn/api/customerservice/login';
-            var data = {'csserial':true};
+            var url = host+'/api/customerservice/logout';
+            var data = {'csserial':clientId};
             $.ajax({
                 type: 'POST',
                 url: url,
@@ -55,7 +58,6 @@ $(function(){
                     rt.close();
                     $("#list-wrap").find('li').remove();
                     $(".conv-wrap").remove();
-                    alert('已经下线');
                     window.location.reload();
                 },
                 error:function(){
@@ -97,6 +99,7 @@ function main(){
             firstFlag = false;
             // 查询当前 当前用户的 的相关信息
             rt.query(function(data) {
+//                console.log(data);
                 if(data.length == 0){
                     addEmpty();
                 }
@@ -126,7 +129,6 @@ function main(){
     rt.on('message', function(data) {
         var _this;
         var handler = 0;
-        getText(data.cid);
         for(var i = 0;i<roomList.length;i++){
             if(roomList[i].convid == data.cid){
                 handler++;
@@ -156,6 +158,29 @@ function main(){
     });
 
 }
+//获取用户信息
+function getQuestion(convid,callback){
+    var questionname = '';
+    var data = {'onlycode':convid};
+    var url = host+'/api/god/viewgod';
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: data,
+        dataType: 'json',
+        success: function(data){
+            if(data.code == 200){
+                questionname = data.businessObj.nickName || data.businessObj.mobile;
+                callback(nickname);
+            }else{
+                alert('用户信息接口报错，请刷新重试');
+            }
+        },
+        error:function(){
+            alert('用户信息获取失败请刷新重试');
+        }
+    });
+}
 // 没有会话展示空模版
 function addEmpty(){
     var _winhtml = _.template(_wintplempty);
@@ -168,52 +193,53 @@ function addChat(convid,name){
     if($(".chat-list-li[data-convid = "+convid+"]").length != 0){   //已经添加过的会话不再添加
         return;
     }
-    // 用来渲染模版的数据
-    var _convidObj = {'convid':convid,'convname':name};
 
-    // 隐藏空模版
-    $("#window-tpl-empty").hide();
+    getQuestion(convid,function(data){
+        // 用来渲染模版的数据
+        var _convidObj = {'convid':convid,'convname':data};
+        //console.log(_convidObj)
+        // 隐藏空模版
+        $("#window-tpl-empty").hide();
 
-    //渲染列表条目模版
-    var _html = _.template(_tpl);
-    var _eleDom = _html(_convidObj);
-    _ele.append($(_eleDom));
+        //渲染列表条目模版
+        var _html = _.template(_tpl);
+        var _eleDom = _html(_convidObj);
+        _ele.append($(_eleDom));
 
-    //渲染聊天窗口模版
-    var _winhtml = _.template(_wintpl);
-    var _wineleDom = _winhtml(_convidObj);
-    _winele.append($(_wineleDom).hide());
+        //渲染聊天窗口模版
+        var _winhtml = _.template(_wintpl);
+        var _wineleDom = _winhtml(_convidObj);
+        _winele.append($(_wineleDom).hide());
 
 
-    //给列表元素绑定事件
-    _ele.find('li').off('click').on('click',function(){
-        var _convid = $(this).data('convid');
-        console.log(_convid);
-        activeChat(_convid);
-        console.log(room);
-        return false;
-    });
+        //给列表元素绑定事件
+        _ele.find('li').off('click').on('click',function(){
+            var _convid = $(this).data('convid');
+            activeChat(_convid);
+            return false;
+        });
 
-    //绑定发送消息点击事件
-    _winele.find('.send-btn').off('click').on('click',function(e){
-        e.preventDefault();
-        var _convid = $(this).closest('.conv-wrap').data('convid');
-        sendMsg(_convid);
-    });
+        //绑定发送图片事件
+        _winele.find('.send-pic').off('change').on('change',function(e){
+            e.preventDefault();
+            var _convid = $(this).closest('.conv-wrap').data('convid');
+            sendImg(_convid);
+        });
 
-    //绑定发送图片事件
-    _winele.find('.send-pic').off('change').on('change',function(e){
-        e.preventDefault();
-        var _convid = $(this).closest('.conv-wrap').data('convid');
-        sendImg(_convid);
-    });
-
-    //绑定发送消息回车事件
-    _winele.find('.input-send').off('keydown').on('keydown',function(e){
-        if(e.keyCode == 13){
+        //绑定发送消息点击事件
+        _winele.find('.send-btn').off('click').on('click',function(e){
+            e.preventDefault();
             var _convid = $(this).closest('.conv-wrap').data('convid');
             sendMsg(_convid);
-        }
+        });
+
+        //绑定发送消息回车事件
+        _winele.find('.input-send').off('keydown').on('keydown',function(e){
+            if(e.keyCode == 13){
+                var _convid = $(this).closest('.conv-wrap').data('convid');
+                sendMsg(_convid);
+            }
+        });
     });
 
 }
@@ -291,7 +317,6 @@ function sendMsg(convid) {
     if (!String(val).replace(/^\s+/, '').replace(/\s+$/, '')) {
         alert('请输入点文字！');
     }
-
     // 向这个房间发送消息，这段代码是兼容多终端格式的，包括 iOS、Android、Window Phone
     room.send({
         text: val
@@ -314,17 +339,14 @@ function sendImg(convid){
     if (picbox.files.length > 0) {
         var file = picbox.files[0];
         var name = 'avatar.jpg';
-        console.log(file);
 
         var avFile = new AV.File(name, file);
         avFile.save().then(function(obj) {
             // 数据保存成功
-            console.log(obj);
             text = {'url':obj.url()};
             sendPic(text);
         }, function(err) {
             // 数据保存失败
-            console.log(err);
             text = '图片发送失败，请刷新重试('+err+')';
             sendPic(text);
         });

@@ -25,7 +25,7 @@
 <!-- 列表模版begin -->
 <script type="text/template" id="list" >
     <li class="chat-list-li" data-convid="<%=convid %>" data-count="0">
-        <a href="#" ><%=convid %></a><span class="hongdian color-red">1</span>
+        <a href="#" ><%=convname %></a><span class="hongdian color-red">1</span>
     </li>
 </script>
 <!-- 列表模版end -->
@@ -47,6 +47,7 @@
         </div>
         <div class="item conv-dom" >
             <textarea id="input-send-<%=convid %>" class="input-send" type="text"></textarea>
+            <a href="#" class="file-wrap">发送图片<input type="file" class="send-pic" id="photoFileUpload-<%=convid %>" ></a>
             <div id="send-btn-<%=convid %>" class="btn send-btn">发送</div>
         </div>
     </div>

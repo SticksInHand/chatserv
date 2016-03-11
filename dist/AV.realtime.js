@@ -324,7 +324,7 @@ var newRealtimeObject = function newRealtimeObject() {
     closeFlag: false,
     // reuse 事件的重试 timer
     reuseTimer: undefined,
-    // resuse 状态，如果为 true 表示内部已经在重试中
+    // resuse 状态，如果为 true 表示内部已经33在重试中
     reuseFlag: false,
     // 当前的 serialId
     serialId: 2015
